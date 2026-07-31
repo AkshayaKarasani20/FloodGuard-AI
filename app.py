@@ -1,10 +1,14 @@
+# =====================================
+# IMPORTS
+# =====================================
+
 import streamlit as st
 import io
 import zipfile
+
 from PIL import Image
 
 from src.predict import predict_image
-
 # =====================================
 # PAGE CONFIG
 # =====================================
@@ -15,47 +19,69 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # =====================================
 # SESSION STATE
 # =====================================
 
 if "result" not in st.session_state:
     st.session_state.result = None
-
-if "theme" not in st.session_state:
-    st.session_state.theme = "Dark"
 # =====================================
-# THEME COLORS
+# COLORS
 # =====================================
 
-if st.session_state.theme == "Dark":
 
-    COLORS = {
-        "bg": "#0F172A",
-        "card": "#1E293B",
-        "border": "#334155",
-        "text": "#F8FAFC",
-        "secondary": "#CBD5E1",
-        "accent": "#38BDF8",
-        "success": "#22C55E",
-        "warning": "#F59B0B",
-        "danger": "#EF4444"
-    }
+COLORS = {
 
-else:
+    "bg": "#0F172A",
 
-    COLORS = {
-        "bg": "#F8FAFC",
-        "card": "#FFFFFF",
-        "border": "#CBD5E1",
-        "text": "#0F172A",
-        "secondary": "#475569",
-        "accent": "#0284C7",
-        "success": "#16A34A",
-        "warning": "#D97706",
-        "danger": "#DC2626"
-    }
+    "card": "#1E293B",
+
+    "text": "#F8FAFC",
+
+    "secondary": "#CBD5E1",
+
+    "accent": "#38BDF8"
+
+}
+# =====================================
+# CSS
+# =====================================
+
+
+st.markdown(
+f"""
+<style>
+
+
+.stApp {{
+
+background:{COLORS["bg"]};
+
+}}
+
+
+
+.block-container {{
+
+padding-top:1rem;
+
+}}
+
+
+
+h1,h2,h3 {{
+
+color:{COLORS["text"]};
+
+}}
+
+
+
+</style>
+
+""",
+unsafe_allow_html=True
+)
 # =====================================
 # SIDEBAR
 # =====================================
@@ -123,11 +149,11 @@ with st.sidebar:
         st.write(
             """
             🧠 Architecture:
-            Light U-Net
+            U-Net Deep Learning Model
 
 
             ⚡ Optimization:
-            Lightweight Deep Learning Model
+            Image Segmentation Model
 
 
             🛰 Input:
@@ -152,13 +178,13 @@ with st.sidebar:
             1️⃣ Upload Satellite Image
 
 
-            2️⃣ AI Model analyzes the image
+            2️⃣ AI model analyzes the image
 
 
             3️⃣ Flood regions are detected
 
 
-            4️⃣ Risk level and recommendations
+            4️⃣ Flood coverage and risk level
             are generated
             """
         )
@@ -176,121 +202,51 @@ with st.sidebar:
             🔹 Deep Learning Based
 
 
-            🔹 Image Segmentation
+            🔹 U-Net Architecture
 
 
-            🔹 Automated Flood Analysis
+            🔹 Binary Image Segmentation
 
 
-            🔹 Visual Flood Mapping
+            🔹 Satellite Image Analysis
             """
         )
-# =====================================
-# COMPACT FULL SCREEN CSS
-# =====================================
-
-st.markdown(
-f"""
-<style>
-
-.stApp {{
-
-    background:{COLORS["bg"]};
-    color:{COLORS["text"]};
-
-}}
 
 
-.block-container {{
 
-    max-width:1500px;
-    width:92%;
-    padding-top:0.3rem;
-    padding-left:1rem;
-    padding-right:1rem;
-    padding-bottom:1rem;
+    # ==============================
+    # NEW ANALYSIS
+    # ==============================
 
-}}
+    with st.expander("🔄 New Analysis"):
 
-
-.title {{
-
-    text-align:center;
-    font-size:32px;
-    font-weight:700;
-    margin:0;
-
-}}
+        st.write(
+            """
+            Clear the current prediction
+            and upload a new satellite image.
+            """
+        )
 
 
-.subtitle {{
+        if st.button(
+            "Start New Analysis",
+            use_container_width=True
+        ):
 
-    text-align:center;
-    font-size:14px;
-    margin-bottom:10px;
+            st.session_state.result = None
 
-}}
-
-
-.card {{
-
-    background:{COLORS["card"]};
-    border-radius:12px;
-    padding:8px;
-
-}}
-
-
-.metric-card {{
-
-    background:{COLORS["card"]};
-    border-radius:10px;
-    padding:8px;
-
-}}
-
-
-/* Reduce all vertical spacing */
-
-.stMarkdown {{
-
-    margin-bottom:5px;
-
-}}
-
-
-</style>
-""",
-unsafe_allow_html=True
-)
+            st.rerun()
 # =====================================
 # HEADER
 # =====================================
 
-col1, col2 = st.columns([8, 2])
-
-
-with col2:
-
-    dark_mode = st.toggle(
-        "🌙 Dark Mode",
-        value=(st.session_state.theme == "Dark")
-    )
-
-    selected_theme = "Dark" if dark_mode else "Light"
-
-
-    if selected_theme != st.session_state.theme:
-
-        st.session_state.theme = selected_theme
-
-        st.rerun()
-
-
-
 st.markdown(
-f"""
-<div style="text-align:center; margin-top:30px;">
+"""
+<div style="
+text-align:center;
+margin-top:20px;
+">
+
 
 <div style="
 font-size:70px;
@@ -299,14 +255,14 @@ font-size:70px;
 </div>
 
 
-<div class="title">
+<h1>
 FloodGuard AI
-</div>
+</h1>
 
 
-<div class="subtitle">
+<p>
 AI-Powered Flood Detection from Satellite Images
-</div>
+</p>
 
 
 </div>
@@ -314,19 +270,16 @@ AI-Powered Flood Detection from Satellite Images
 unsafe_allow_html=True
 )
 # =====================================
-# UPLOAD SECTION
+# IMAGE UPLOAD
 # =====================================
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-
-col1, col2, col3 = st.columns([2,4,2])
+col1, col2, col3 = st.columns([2, 4, 2])
 
 
 with col2:
 
     uploaded_file = st.file_uploader(
-        "📤 Upload",
+        "📤 Upload Satellite Image",
         type=[
             "png",
             "jpg",
@@ -335,7 +288,9 @@ with col2:
             "tiff"
         ]
     )
-
+# =====================================
+# PREDICTION
+# =====================================
 
 if uploaded_file is not None:
 
@@ -350,82 +305,6 @@ if uploaded_file is not None:
 # IMAGE RESULTS
 # =====================================
 
-if st.session_state.result is not None:
-
-    result = st.session_state.result
-
-
-    st.markdown(
-    f"""
-    <h3 style="
-    color:{COLORS["text"]};
-    font-size:20px;
-    margin-top:15px;
-    margin-bottom:10px;
-    ">
-    🛰 Detection Results
-    </h3>
-    """,
-    unsafe_allow_html=True
-    )
-
-
-    img1, img2, img3 = st.columns(
-        3,
-        gap="medium"
-    )
-
-
-    def display_image(column, title, image):
-
-        with column:
-
-            st.markdown(
-            f"""
-            <p style="
-            color:{COLORS["text"]};
-            font-size:15px;
-            font-weight:600;
-            text-align:center;
-            margin-bottom:8px;
-            ">
-            {title}
-            </p>
-            """,
-            unsafe_allow_html=True
-            )
-
-
-            st.image(
-                image,
-                width=300
-            )
-
-
-
-    display_image(
-        img1,
-        "📷 Original",
-        result["original"]
-    )
-
-
-    display_image(
-        img2,
-        "🛰 Overlay",
-        result["overlay"]
-    )
-
-
-    display_image(
-        img3,
-        "🌊 Flood Mask",
-        result["mask"]
-    )
-# =====================================
-# STEP 7
-# FLOOD COVERAGE & RISK LEVEL
-# =====================================
 
 if st.session_state.result is not None:
 
@@ -433,198 +312,51 @@ if st.session_state.result is not None:
 
 
     st.markdown(
-        "<br>",
+        """
+        <br>
+        <h2 style="text-align:center;">
+        🛰 Detection Results
+        </h2>
+        """,
         unsafe_allow_html=True
     )
-
-
-    col1, col2 = st.columns(
-        2,
-        gap="large"
-    )
-
-# =====================================
-# FLOOD COVERAGE, RISK, CONFIDENCE
-# =====================================
-
-if st.session_state.result is not None:
-
-    result = st.session_state.result
 
 
     col1, col2, col3 = st.columns(3)
 
-# =====================================
-# STEP 7
-# FLOOD SEVERITY - RISK - CONFIDENCE
-# =====================================
-
-if st.session_state.result is not None:
-
-    result = st.session_state.result
-
-
-    col1, col2, col3 = st.columns(
-        3,
-        gap="medium"
-    )
-
-
-    # ==============================
-    # FLOOD SEVERITY
-    # ==============================
 
     with col1:
 
-        flood_text = result["flood_percentage"]
+        st.write("📷 Original Image")
 
-
-        flood_number = float(
-            flood_text.replace("%", "")
+        st.image(
+            result["original"],
+            width=300
         )
 
-
-        flood_number = max(
-            0,
-            min(
-                flood_number,
-                100
-            )
-        )
-
-
-        st.markdown(
-        f"""
-        <p style="
-        color:{COLORS['secondary']};
-        font-size:14px;
-        font-weight:600;
-        margin:0;
-        ">
-        🌊 Flood Severity
-        </p>
-
-
-        <p style="
-        color:{COLORS['text']};
-        font-size:24px;
-        font-weight:700;
-        margin:5px 0;
-        ">
-        {flood_text}
-        </p>
-
-
-        <div style="
-        background:{COLORS['border']};
-        height:8px;
-        width:100%;
-        border-radius:10px;
-        ">
-
-            <div style="
-            background:{COLORS['accent']};
-            height:8px;
-            width:{flood_number}%;
-            border-radius:10px;
-            ">
-            </div>
-
-        </div>
-
-        """,
-        unsafe_allow_html=True
-        )
-
-
-
-    # ==============================
-    # RISK LEVEL
-    # ==============================
 
     with col2:
 
-        risk = result["risk_level"]
+        st.write("🛰 Flood Overlay")
 
-
-        if "Low" in risk:
-
-            risk_color = COLORS["success"]
-
-        elif "Moderate" in risk:
-
-            risk_color = COLORS["warning"]
-
-        else:
-
-            risk_color = COLORS["danger"]
-
-
-
-        st.markdown(
-        f"""
-        <p style="
-        color:{COLORS['secondary']};
-        font-size:14px;
-        font-weight:600;
-        margin:0;
-        ">
-        ⚠ Risk Level
-        </p>
-
-
-        <p style="
-        color:{risk_color};
-        font-size:24px;
-        font-weight:700;
-        margin:5px 0;
-        ">
-        {risk}
-        </p>
-
-        """,
-        unsafe_allow_html=True
+        st.image(
+            result["overlay"],
+            width=300
         )
 
-
-
-    # ==============================
-    # AI CONFIDENCE
-    # ==============================
 
     with col3:
 
-        confidence = result["confidence"]
+        st.write("🌊 Flood Mask")
 
-
-        st.markdown(
-        f"""
-        <p style="
-        color:{COLORS['secondary']};
-        font-size:14px;
-        font-weight:600;
-        margin:0;
-        ">
-        🧠 AI Confidence
-        </p>
-
-
-        <p style="
-        color:{COLORS['text']};
-        font-size:24px;
-        font-weight:700;
-        margin:5px 0;
-        ">
-        {confidence}
-        </p>
-
-        """,
-        unsafe_allow_html=True
+        st.image(
+            result["mask"],
+            width=300
         )
 # =====================================
-# STEP 8
-# RECOMMENDATIONS
+# FLOOD ANALYSIS RESULTS
 # =====================================
+
 
 if st.session_state.result is not None:
 
@@ -632,50 +364,139 @@ if st.session_state.result is not None:
 
 
     st.markdown(
-        "<br>",
+        """
+        <br>
+        <h2 style="text-align:center;">
+        🌊 Flood Analysis
+        </h2>
+        """,
         unsafe_allow_html=True
     )
 
 
+    col1, col2, col3 = st.columns(3)
+
+
+
+    with col1:
+
+        st.markdown(
+            f"""
+            <div style="text-align:center;">
+
+            <p style="
+            font-size:16px;
+            margin-bottom:5px;
+            ">
+            🌊 Flood Coverage
+            </p>
+
+
+            <p style="
+            font-size:24px;
+            margin:0;
+            ">
+            {result["flood_percentage"]}
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+
+    with col2:
+
+        st.markdown(
+            f"""
+            <div style="text-align:center;">
+
+            <p style="
+            font-size:16px;
+            margin-bottom:5px;
+            ">
+            ⚠ Risk Level
+            </p>
+
+
+            <p style="
+            font-size:24px;
+            margin:0;
+            ">
+            {result["risk_level"]}
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+
+    with col3:
+
+        st.markdown(
+            f"""
+            <div style="text-align:center;">
+
+            <p style="
+            font-size:16px;
+            margin-bottom:5px;
+            ">
+            🧠 AI Confidence
+            </p>
+
+
+            <p style="
+            font-size:24px;
+            margin:0;
+            ">
+            {result["confidence"]}
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+# =====================================
+# RECOMMENDATIONS
+# =====================================
+
+
+if st.session_state.result is not None:
+
+    result = st.session_state.result
+
+
     st.markdown(
-    f"""
-    <p style="
-    color:{COLORS["secondary"]};
-    font-size:20px;
-    font-weight:600;
-    margin-bottom:5px;
-    ">
-    💡 Recommendations
-    </p>
-    """,
-    unsafe_allow_html=True
+        """
+        <br>
+
+        <h2 style="text-align:center;">
+        💡 Recommendations
+        </h2>
+        """,
+        unsafe_allow_html=True
     )
 
 
     recommendation = result["recommendation"]
 
 
-    # Convert new lines safely
-
-    recommendation_html = recommendation.replace(
-        "\n",
-        "<br>"
-    )
-
-
     st.markdown(
-    f"""
-    <div style="
-    color:{COLORS["text"]};
-    font-size:16px;
-    line-height:1.6;
-    ">
+        f"""
+        <div style="
+        text-align:center;
+        font-size:16px;
+        line-height:1.8;
+        ">
 
-    {recommendation_html}
+        {recommendation.replace(chr(10), "<br>")}
 
-    </div>
-    """,
-    unsafe_allow_html=True
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 # =====================================
 # DOWNLOAD BUTTON
@@ -686,100 +507,33 @@ if st.session_state.result is not None:
     result = st.session_state.result
 
 
-    zip_buffer = io.BytesIO()
-
-
-    with zipfile.ZipFile(
-        zip_buffer,
-        "w"
-    ) as zip_file:
-
-
-        # Overlay
-
-        overlay_buffer = io.BytesIO()
-
-        Image.fromarray(
-            result["overlay"]
-        ).save(
-            overlay_buffer,
-            format="PNG"
-        )
-
-        zip_file.writestr(
-            "flood_overlay.png",
-            overlay_buffer.getvalue()
-        )
-
-
-        # Mask
-
-        mask_buffer = io.BytesIO()
-
-        Image.fromarray(
-            result["mask"]
-        ).save(
-            mask_buffer,
-            format="PNG"
-        )
-
-        zip_file.writestr(
-            "flood_mask.png",
-            mask_buffer.getvalue()
-        )
-
-
-        # Report
-
-        report = f"""
-FloodGuard AI Report
-
-Flood Coverage:
-{result["flood_percentage"]}
-
-Risk Level:
-{result["risk_level"]}
-
-
-Recommendations:
-
-{result["recommendation"]}
-"""
-
-        zip_file.writestr(
-            "flood_report.txt",
-            report
-        )
-
-
-    zip_buffer.seek(0)
-
-
     st.download_button(
-        label="📥 Download",
-        data=zip_buffer,
-        file_name="FloodGuard_Result.zip",
-        mime="application/zip"
+
+        label="📥 Download ",
+
+        data="FloodGuard AI Analysis Completed",
+
+        file_name="FloodGuard_Result.txt",
+
+        mime="text/plain"
+
     )
 # =====================================
 # FOOTER
 # =====================================
 
 st.markdown(
-f"""
-<br><br>
-
-<hr style="
-border:1px solid {COLORS["border"]};
-">
+"""
+<br>
+<hr>
 
 
 <div style="
 text-align:center;
-color:{COLORS["secondary"]};
 font-size:13px;
-line-height:1.6;
+color:#CBD5E1;
 ">
+
 
 🌊 <b>FloodGuard AI</b><br>
 
@@ -787,29 +541,9 @@ AI-Powered Flood Detection from Satellite Images<br>
 
 Built using Deep Learning and Streamlit
 
+
 </div>
 
 """,
 unsafe_allow_html=True
 )
-# =====================================
-# RESET ANALYSIS
-# =====================================
-
-if st.session_state.result is not None:
-
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True
-    )
-
-
-    if st.button(
-        "🔄 New Analysis",
-        use_container_width=True
-    ):
-
-        st.session_state.result = None
-        st.session_state.uploaded_file = None
-
-        st.rerun()

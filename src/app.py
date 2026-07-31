@@ -1,11 +1,12 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
+
 from predict import predict_image
 
-# -------------------------------------------------------
+# ==========================================================
 # PAGE CONFIG
-# -------------------------------------------------------
+# ==========================================================
 
 st.set_page_config(
     page_title="FloodGuard AI",
@@ -13,62 +14,48 @@ st.set_page_config(
     layout="wide"
 )
 
-# -------------------------------------------------------
+# ==========================================================
 # CUSTOM CSS
-# -------------------------------------------------------
+# ==========================================================
 
 st.markdown("""
 <style>
 
 .stApp{
-    background:#F6F8FB;
+    background-color:#EEF6FF;
 }
 
 .block-container{
-    padding-top:1.5rem;
-    padding-bottom:2rem;
+    padding-top:2rem;
 }
 
-.hero{
-    background:linear-gradient(135deg,#1565C0,#42A5F5);
-    padding:35px;
-    border-radius:18px;
+.title{
     text-align:center;
-    color:white;
-    margin-bottom:25px;
+    color:#1565C0;
+    font-size:52px;
+    font-weight:bold;
 }
 
-.hero h1{
-    font-size:50px;
-    margin-bottom:5px;
-}
-
-.hero p{
+.subtitle{
+    text-align:center;
+    color:#555;
     font-size:20px;
-    color:white;
-}
-
-.feature{
-    background:white;
-    padding:15px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0px 2px 10px rgba(0,0,0,0.08);
+    margin-bottom:25px;
 }
 
 .footer{
     text-align:center;
     color:gray;
-    padding-top:25px;
-    font-size:15px;
+    font-size:14px;
+    padding-top:30px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------
+# ==========================================================
 # SIDEBAR
-# -------------------------------------------------------
+# ==========================================================
 
 with st.sidebar:
 
@@ -79,114 +66,92 @@ with st.sidebar:
 
     st.title("🌊 FloodGuard AI")
 
-    st.write("### AI Powered Flood Detection")
-
-    st.info("""
-Upload satellite images and detect flooded regions using Deep Learning.
-
-### Features
-
-✅ Flood Detection
-
-✅ Flood Mask
-
-✅ Flood Overlay
-
-✅ Flood Percentage
-
-✅ Risk Analysis
-
-✅ Safety Tips
+    st.markdown("""
+AI-powered flood detection from satellite images using a **U-Net Deep Learning model**.
 """)
 
     st.divider()
 
-    st.success("Developed using U-Net + TensorFlow")
+    st.subheader("✨ Features")
 
-# -------------------------------------------------------
-# HERO SECTION
-# -------------------------------------------------------
-
-st.markdown("""
-<div class="hero">
-
-<h1>🌊 FloodGuard AI</h1>
-
-<p>AI Powered Flood Detection using Satellite Images</p>
-
-</div>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------------
-# FEATURES
-# -------------------------------------------------------
-
-c1,c2,c3,c4=st.columns(4)
-
-with c1:
     st.markdown("""
-<div class="feature">
-<h3>🛰</h3>
-<b>Satellite Images</b>
-</div>
-""",unsafe_allow_html=True)
+- 🛰 Flood Detection
+- 🌊 Flood Segmentation
+- 📊 Flood Percentage
+- 🚨 Risk Analysis
+- 💡 Safety Recommendations
+""")
 
-with c2:
+    st.divider()
+
+    st.subheader("🧠 Model")
+
     st.markdown("""
-<div class="feature">
-<h3>🤖</h3>
-<b>Deep Learning</b>
-</div>
-""",unsafe_allow_html=True)
+**Architecture:** U-Net
 
-with c3:
-    st.markdown("""
-<div class="feature">
-<h3>🌊</h3>
-<b>Flood Segmentation</b>
-</div>
-""",unsafe_allow_html=True)
+**Framework:** TensorFlow
 
-with c4:
-    st.markdown("""
-<div class="feature">
-<h3>📊</h3>
-<b>Risk Analysis</b>
-</div>
-""",unsafe_allow_html=True)
+**Dataset:** Sen1Floods11
 
-st.write("")
-st.write("")
+**Task:** Binary Segmentation
+""")
 
-# -------------------------------------------------------
-# UPLOAD
-# -------------------------------------------------------
+# ==========================================================
+# HEADER
+# ==========================================================
 
-uploaded_file = st.file_uploader(
-    "📤 Upload Satellite Image",
-    type=["png","jpg","jpeg"]
+st.markdown(
+    "<div class='title'>🌊 FloodGuard AI</div>",
+    unsafe_allow_html=True
 )
 
-# -------------------------------------------------------
+st.markdown(
+    "<div class='subtitle'>AI Powered Flood Detection from Satellite Images</div>",
+    unsafe_allow_html=True
+)
+
+# ==========================================================
+# ABOUT
+# ==========================================================
+
+with st.expander("ℹ About this Project"):
+
+    st.write("""
+FloodGuard AI detects flooded regions from satellite images using a Deep Learning U-Net model.
+
+The application predicts flood masks, estimates flood coverage, and provides a flood risk assessment.
+""")
+
+# ==========================================================
+# FILE UPLOAD
+# ==========================================================
+
+uploaded_file = st.file_uploader(
+    "📤 Upload a Satellite Image",
+    type=["png", "jpg", "jpeg"]
+)
+
+# ==========================================================
 # PREDICTION
-# -------------------------------------------------------
+# ==========================================================
 
 if uploaded_file is not None:
 
     image = Image.open(uploaded_file).convert("RGB")
     image = np.array(image)
 
-    with st.spinner("🔍 AI is analyzing the satellite image..."):
+    with st.spinner("🔍 Analyzing Satellite Image..."):
 
-        original,mask,overlay,flood = predict_image(image)
+        original, mask, overlay, flood = predict_image(image)
 
-    st.success("✅ Prediction Completed Successfully")
+    st.success("✅ Prediction Completed Successfully!")
 
-    st.write("")
+    st.divider()
 
-    col1,col2,col3=st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.image(
             original,
             caption="🛰 Original Image",
@@ -194,14 +159,16 @@ if uploaded_file is not None:
         )
 
     with col2:
+
         st.image(
             mask,
-            caption="🌊 Flood Mask",
+            caption="🌊 Predicted Flood Mask",
             use_container_width=True,
             clamp=True
         )
 
     with col3:
+
         st.image(
             overlay,
             caption="🗺 Flood Overlay",
@@ -212,116 +179,102 @@ if uploaded_file is not None:
 
     st.subheader("📊 Flood Analysis")
 
-    a,b,c=st.columns(3)
+    c1, c2, c3 = st.columns(3)
 
-    with a:
-        st.metric(
-            "Flood Coverage",
-            f"{flood:.2f}%"
-        )
+    with c1:
+        st.metric("Flood Coverage", f"{flood:.2f}%")
 
-    with b:
+    with c2:
+        st.metric("Model", "U-Net")
 
-        if flood<10:
-            st.metric("Risk Level","🟢 LOW")
+    with c3:
 
-        elif flood<30:
-            st.metric("Risk Level","🟠 MEDIUM")
+        if flood < 10:
+            st.metric("Risk", "LOW")
 
-        else:
-            st.metric("Risk Level","🔴 HIGH")
-
-    with c:
-
-        if flood<10:
-            st.metric("Status","Safe")
-
-        elif flood<30:
-            st.metric("Status","Monitor")
+        elif flood < 30:
+            st.metric("Risk", "MEDIUM")
 
         else:
-            st.metric("Status","Danger")
+            st.metric("Risk", "HIGH")
+
+    st.write("### Flood Coverage")
+
+    st.progress(min(int(flood),100))
 
     st.divider()
 
-    st.subheader("💡 Safety Recommendations")
+    st.subheader("🚨 Flood Risk")
 
-    if flood<10:
+    if flood < 10:
 
-        st.success("""
+        st.success("🟢 LOW RISK")
 
-✅ No significant flooding detected.
+    elif flood < 30:
 
-✅ Continue monitoring weather updates.
+        st.warning("🟠 MEDIUM RISK")
+
+    else:
+
+        st.error("🔴 HIGH RISK")
+
+    st.subheader("💡 Recommendations")
+
+    if flood < 10:
+
+        st.info("""
+✅ No major flood detected.
+
+✅ Continue monitoring.
 
 ✅ Area appears safe.
-
 """)
 
-    elif flood<30:
+    elif flood < 30:
 
         st.warning("""
+✅ Water accumulation detected.
 
-⚠ Water accumulation detected.
+✅ Stay alert.
 
-⚠ Stay alert.
+✅ Avoid low-lying roads.
 
-⚠ Avoid low-lying roads.
-
-⚠ Monitor weather conditions.
-
+✅ Monitor weather updates.
 """)
 
     else:
 
         st.error("""
+✅ High flood possibility detected.
 
-🚨 High flood probability detected.
+✅ Avoid travelling.
 
-🚨 Avoid travelling.
+✅ Contact local authorities.
 
-🚨 Contact emergency services.
-
-🚨 Move to safer locations immediately.
-
+✅ Move to safer locations if necessary.
 """)
 
 else:
 
-    st.info("👆 Upload a satellite image to start flood detection.")
+    st.info("👆 Upload a satellite image to begin prediction.")
 
-# -------------------------------------------------------
-# ABOUT PROJECT
-# -------------------------------------------------------
-
-st.divider()
-
-st.subheader("ℹ About FloodGuard AI")
-
-st.write("""
-FloodGuard AI is a Deep Learning application that detects flooded regions
-from satellite imagery using a trained U-Net segmentation model.
-
-The system predicts flood masks, estimates flood coverage, and provides
-risk analysis to assist in disaster monitoring.
-""")
-
-# -------------------------------------------------------
+# ==========================================================
 # FOOTER
-# -------------------------------------------------------
+# ==========================================================
 
-st.markdown("""
-<div class="footer">
+st.markdown("---")
 
-🌊 <b>FloodGuard AI</b>
+st.markdown(
+"""
+<div class='footer'>
 
-<br><br>
+🌊 <b>FloodGuard AI</b><br><br>
 
-Artificial Intelligence & Machine Learning Mini Project
-
-<br><br>
+Artificial Intelligence & Machine Learning Mini Project<br><br>
 
 Developed by <b>Akshaya Karasani</b>
 
 </div>
-""",unsafe_allow_html=True)
+""",
+unsafe_allow_html=True
+)

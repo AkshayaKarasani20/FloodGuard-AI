@@ -7,7 +7,7 @@ from tensorflow.keras.models import load_model
 
 
 # =====================================
-# MODEL PATH
+# PATH CONFIGURATION
 # =====================================
 
 BASE_DIR = os.path.dirname(
@@ -23,9 +23,12 @@ MODEL_PATH = os.path.join(
 )
 
 
+IMG_SIZE = 256
+
 
 # =====================================
 # CUSTOM METRICS
+# (Only kept for compatibility)
 # =====================================
 
 def dice_coef(y_true, y_pred):
@@ -52,7 +55,6 @@ def dice_coef(y_true, y_pred):
     )
 
 
-
 def iou_metric(y_true, y_pred):
 
     smooth = 1e-7
@@ -60,11 +62,9 @@ def iou_metric(y_true, y_pred):
     y_true = tf.keras.backend.flatten(y_true)
     y_pred = tf.keras.backend.flatten(y_pred)
 
-
     intersection = tf.reduce_sum(
         y_true * y_pred
     )
-
 
     union = (
         tf.reduce_sum(y_true)
@@ -74,18 +74,12 @@ def iou_metric(y_true, y_pred):
         intersection
     )
 
-
     return (
-        (intersection + smooth)
-        /
-        (union + smooth)
+        intersection + smooth
+    ) / (
+        union + smooth
     )
 
-
-
-# =====================================
-# CUSTOM LOSS
-# =====================================
 
 def combined_loss(y_true, y_pred):
 
@@ -94,44 +88,39 @@ def combined_loss(y_true, y_pred):
         y_pred
     )
 
-
     dice_loss = 1 - dice_coef(
         y_true,
         y_pred
     )
 
-
     return bce + dice_loss
 
 
 
-
 # =====================================
-# LOAD MODEL
-# =====================================
-
-model = load_model(
-    MODEL_PATH,
-    custom_objects={
-        "combined_loss": combined_loss,
-        "dice_coef": dice_coef,
-        "iou_metric": iou_metric
-    }
-)
-
-
-
-# =====================================
-# IMAGE SIZE
+# LOAD MODEL LAZILY
 # =====================================
 
-IMG_SIZE = 256
+model = None
 
+
+def get_model():
+
+    global model
+
+    if model is None:
+
+        model = load_model(
+            MODEL_PATH,
+            compile=False
+        )
+
+    return model
 
 
 
 # =====================================
-# PREPROCESS IMAGE
+# IMAGE PREPROCESSING
 # =====================================
 
 def preprocess_image(image):
@@ -139,7 +128,6 @@ def preprocess_image(image):
     image = image.convert(
         "RGB"
     )
-
 
     original = np.array(
         image
@@ -168,12 +156,12 @@ def preprocess_image(image):
 
 
 
-
 # =====================================
 # FLOOD ANALYSIS
 # =====================================
 
 def analyze_flood(mask):
+
 
     flood_pixels = np.sum(
         mask > 0.5
@@ -183,69 +171,71 @@ def analyze_flood(mask):
     total_pixels = mask.size
 
 
-    flood_percentage = (
+    percentage = (
         flood_pixels /
         total_pixels
     ) * 100
 
 
-    flood_percentage = round(
-        float(flood_percentage),
+    percentage = round(
+        float(percentage),
         2
     )
 
 
-    if flood_percentage < 10:
+    if percentage < 10:
 
-        risk_level = "Low 🟢"
+        risk = "Low 🟢"
 
-        recommendation = (
-            "No major flood indication detected.\n\n"
-            "• Continue monitoring weather updates.\n"
-            "• No immediate action is required."
-        )
+        recommendation = """
+No major flood indication detected.
+
+• Continue monitoring weather updates.
+• No immediate action required.
+"""
 
 
-    elif flood_percentage < 40:
+    elif percentage < 40:
 
-        risk_level = "Moderate 🟡"
+        risk = "Moderate 🟡"
 
-        recommendation = (
-            "Possible flood affected regions detected.\n\n"
-            "• Monitor weather conditions.\n"
-            "• Stay updated with local warnings."
-        )
+        recommendation = """
+Possible flood affected regions detected.
+
+• Monitor weather alerts.
+• Stay updated with local warnings.
+"""
 
 
     else:
 
-        risk_level = "High 🔴"
+        risk = "High 🔴"
 
-        recommendation = (
-            "Large flood affected regions detected.\n\n"
-            "• Follow emergency guidelines.\n"
-            "• Avoid affected areas."
-        )
+        recommendation = """
+Large flood affected region detected.
+
+• Follow emergency guidelines.
+• Avoid affected areas.
+"""
 
 
     return (
-        flood_percentage,
-        risk_level,
+        percentage,
+        risk,
         recommendation
     )
 
 
 
-
-
 # =====================================
-# CREATE OVERLAY
+# CREATE FLOOD OVERLAY
 # =====================================
 
 def create_overlay(
         original,
         mask
 ):
+
 
     mask = cv2.resize(
         mask,
@@ -262,9 +252,9 @@ def create_overlay(
     overlay[
         mask > 0
     ] = [
+        255,
         0,
-        0,
-        255
+        0
     ]
 
 
@@ -281,8 +271,6 @@ def create_overlay(
 
 
 
-
-
 # =====================================
 # MAIN PREDICTION FUNCTION
 # =====================================
@@ -295,20 +283,20 @@ def predict_image(uploaded_file):
     )
 
 
-    processed_image, original = preprocess_image(
+    processed, original = preprocess_image(
         image
     )
 
 
+    model = get_model()
+
 
     prediction = model.predict(
-        processed_image
+        processed
     )
 
 
-
     mask = prediction[0]
-
 
 
     if mask.shape[-1] == 1:
@@ -319,7 +307,6 @@ def predict_image(uploaded_file):
         )
 
 
-
     binary_mask = (
         mask > 0.5
     ).astype(
@@ -327,11 +314,9 @@ def predict_image(uploaded_file):
     )
 
 
-
     flood_percentage, risk_level, recommendation = analyze_flood(
         mask
     )
-
 
 
     confidence = round(
@@ -340,12 +325,10 @@ def predict_image(uploaded_file):
     )
 
 
-
     overlay = create_overlay(
         original,
         binary_mask
     )
-
 
 
     return {

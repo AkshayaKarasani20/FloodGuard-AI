@@ -1,0 +1,21 @@
+# Virtual Environment
+venv/
+
+# Dataset
+dataset/
+
+# Results
+results/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+
+# macOS
+.DS_Store

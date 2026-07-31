@@ -1,7 +1,9 @@
 import os
 import numpy as np
 import cv2
+
 from PIL import Image
+
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
@@ -27,78 +29,7 @@ IMG_SIZE = 256
 
 
 # =====================================
-# CUSTOM METRICS
-# (Only kept for compatibility)
-# =====================================
-
-def dice_coef(y_true, y_pred):
-
-    smooth = 1e-7
-
-    y_true = tf.keras.backend.flatten(y_true)
-    y_pred = tf.keras.backend.flatten(y_pred)
-
-    intersection = tf.reduce_sum(
-        y_true * y_pred
-    )
-
-    return (
-        (2.0 * intersection + smooth)
-        /
-        (
-            tf.reduce_sum(y_true)
-            +
-            tf.reduce_sum(y_pred)
-            +
-            smooth
-        )
-    )
-
-
-def iou_metric(y_true, y_pred):
-
-    smooth = 1e-7
-
-    y_true = tf.keras.backend.flatten(y_true)
-    y_pred = tf.keras.backend.flatten(y_pred)
-
-    intersection = tf.reduce_sum(
-        y_true * y_pred
-    )
-
-    union = (
-        tf.reduce_sum(y_true)
-        +
-        tf.reduce_sum(y_pred)
-        -
-        intersection
-    )
-
-    return (
-        intersection + smooth
-    ) / (
-        union + smooth
-    )
-
-
-def combined_loss(y_true, y_pred):
-
-    bce = tf.keras.losses.binary_crossentropy(
-        y_true,
-        y_pred
-    )
-
-    dice_loss = 1 - dice_coef(
-        y_true,
-        y_pred
-    )
-
-    return bce + dice_loss
-
-
-
-# =====================================
-# LOAD MODEL LAZILY
+# LOAD MODEL
 # =====================================
 
 model = None
@@ -125,21 +56,14 @@ def get_model():
 
 def preprocess_image(image):
 
-    image = image.convert(
-        "RGB"
-    )
+    image = image.convert("RGB")
 
-    original = np.array(
-        image
-    )
+    original = np.array(image)
 
 
     resized = cv2.resize(
         original,
-        (
-            IMG_SIZE,
-            IMG_SIZE
-        )
+        (IMG_SIZE, IMG_SIZE)
     )
 
 
@@ -162,11 +86,9 @@ def preprocess_image(image):
 
 def analyze_flood(mask):
 
-
     flood_pixels = np.sum(
         mask > 0.5
     )
-
 
     total_pixels = mask.size
 
@@ -188,7 +110,7 @@ def analyze_flood(mask):
         risk = "Low 🟢"
 
         recommendation = """
-No major flood indication detected.
+No major flood regions detected.
 
 • Continue monitoring weather updates.
 • No immediate action required.
@@ -219,11 +141,7 @@ Large flood affected region detected.
 """
 
 
-    return (
-        percentage,
-        risk,
-        recommendation
-    )
+    return percentage, risk, recommendation
 
 
 
@@ -231,11 +149,7 @@ Large flood affected region detected.
 # CREATE FLOOD OVERLAY
 # =====================================
 
-def create_overlay(
-        original,
-        mask
-):
-
+def create_overlay(original, mask):
 
     mask = cv2.resize(
         mask,
@@ -249,9 +163,7 @@ def create_overlay(
     overlay = original.copy()
 
 
-    overlay[
-        mask > 0
-    ] = [
+    overlay[mask > 0] = [
         255,
         0,
         0
@@ -272,7 +184,7 @@ def create_overlay(
 
 
 # =====================================
-# MAIN PREDICTION FUNCTION
+# MAIN PREDICTION
 # =====================================
 
 def predict_image(uploaded_file):
@@ -320,7 +232,7 @@ def predict_image(uploaded_file):
 
 
     confidence = round(
-        float(np.max(mask) * 100),
+        float(np.mean(mask)) * 100,
         2
     )
 
@@ -333,31 +245,27 @@ def predict_image(uploaded_file):
 
     return {
 
-        "original":
-            original,
+        "original": Image.fromarray(
+            original.astype(np.uint8)
+        ),
 
+        "mask": Image.fromarray(
+            (binary_mask * 255).astype(np.uint8)
+        ),
 
-        "mask":
-            binary_mask * 255,
-
-
-        "overlay":
-            overlay,
-
+        "overlay": Image.fromarray(
+            overlay.astype(np.uint8)
+        ),
 
         "flood_percentage":
             f"{flood_percentage}%",
 
-
         "risk_level":
             risk_level,
-
 
         "confidence":
             f"{confidence}%",
 
-
         "recommendation":
             recommendation
-
     }

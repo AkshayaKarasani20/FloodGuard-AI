@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from PIL import Image
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 
 
 # =====================================
@@ -22,14 +23,110 @@ MODEL_PATH = os.path.join(
 )
 
 
+
+# =====================================
+# CUSTOM METRICS
+# =====================================
+
+def dice_coef(y_true, y_pred):
+
+    smooth = 1e-7
+
+    y_true = tf.keras.backend.flatten(y_true)
+    y_pred = tf.keras.backend.flatten(y_pred)
+
+    intersection = tf.reduce_sum(
+        y_true * y_pred
+    )
+
+    return (
+        (2.0 * intersection + smooth)
+        /
+        (
+            tf.reduce_sum(y_true)
+            +
+            tf.reduce_sum(y_pred)
+            +
+            smooth
+        )
+    )
+
+
+
+def iou_metric(y_true, y_pred):
+
+    smooth = 1e-7
+
+    y_true = tf.keras.backend.flatten(y_true)
+    y_pred = tf.keras.backend.flatten(y_pred)
+
+
+    intersection = tf.reduce_sum(
+        y_true * y_pred
+    )
+
+
+    union = (
+        tf.reduce_sum(y_true)
+        +
+        tf.reduce_sum(y_pred)
+        -
+        intersection
+    )
+
+
+    return (
+        (intersection + smooth)
+        /
+        (union + smooth)
+    )
+
+
+
+# =====================================
+# CUSTOM LOSS
+# =====================================
+
+def combined_loss(y_true, y_pred):
+
+    bce = tf.keras.losses.binary_crossentropy(
+        y_true,
+        y_pred
+    )
+
+
+    dice_loss = 1 - dice_coef(
+        y_true,
+        y_pred
+    )
+
+
+    return bce + dice_loss
+
+
+
+
 # =====================================
 # LOAD MODEL
 # =====================================
 
-model = tf.keras.models.load_model(
+model = load_model(
     MODEL_PATH,
-    compile=False
+    custom_objects={
+        "combined_loss": combined_loss,
+        "dice_coef": dice_coef,
+        "iou_metric": iou_metric
+    }
 )
+
+
+
+# =====================================
+# IMAGE SIZE
+# =====================================
+
+IMG_SIZE = 256
+
 
 
 
@@ -39,105 +136,7 @@ model = tf.keras.models.load_model(
 
 def preprocess_image(image):
 
-    image = np.array(image)
-
-
-    # Remove alpha channel
-
-    if image.shape[-1] == 4:
-        image = image[:, :, :3]
-
-
-    # IMPORTANT:
-    # Model was trained with 256x256
-
-    image = cv2.resize(
-        image,
-        (256, 256)
-    )
-
-
-    # Normalize
-
-    image = image / 255.0
-
-
-    # Add batch dimension
-
-    image = np.expand_dims(
-        image,
-        axis=0
-    )
-
-
-    return image
-
-
-
-# =====================================
-# RISK LEVEL
-# =====================================
-
-def get_risk_level(percentage):
-
-    if percentage < 10:
-        return "Low 🟢"
-
-    elif percentage < 40:
-        return "Medium 🟡"
-
-    else:
-        return "High 🔴"
-
-
-
-# =====================================
-# RECOMMENDATIONS
-# =====================================
-
-def get_recommendation(risk):
-
-    if "High" in risk:
-
-        return (
-            "Flood indication detected.\n"
-            "• Avoid flood affected areas.\n"
-            "• Follow emergency updates.\n"
-            "• Stay alert."
-        )
-
-
-    elif "Medium" in risk:
-
-        return (
-            "Moderate flood possibility detected.\n"
-            "• Monitor weather updates.\n"
-            "• Stay prepared."
-        )
-
-
-    else:
-
-        return (
-            "No major flood indication detected.\n"
-            "• Continue monitoring weather updates.\n"
-            "• No immediate action is required."
-        )
-
-
-
-# =====================================
-# MAIN PREDICTION
-# =====================================
-
-def predict_image(uploaded_file):
-
-
-    # Open image
-
-    image = Image.open(
-        uploaded_file
-    ).convert(
+    image = image.convert(
         "RGB"
     )
 
@@ -147,66 +146,39 @@ def predict_image(uploaded_file):
     )
 
 
-
-    # Preprocess
-
-    processed = preprocess_image(
-        image
-    )
-
-
-
-    # Prediction
-
-    prediction = model.predict(
-        processed
-    )
-
-
-    mask = prediction[0]
-
-
-
-    # Convert probability mask
-
-    mask = (
-        mask > 0.5
-    ).astype(
-        np.uint8
-    )
-
-
-
-    # Remove channel dimension
-
-    if mask.shape[-1] == 1:
-
-        mask = np.squeeze(
-            mask,
-            axis=-1
-        )
-
-
-
-    # Resize mask to original image size
-
-    mask = cv2.resize(
-        mask,
+    resized = cv2.resize(
+        original,
         (
-            original.shape[1],
-            original.shape[0]
+            IMG_SIZE,
+            IMG_SIZE
         )
     )
 
 
+    resized = resized / 255.0
 
-    # =====================================
-    # FLOOD PERCENTAGE
-    # =====================================
+
+    resized = np.expand_dims(
+        resized,
+        axis=0
+    )
+
+
+    return resized, original
+
+
+
+
+# =====================================
+# FLOOD ANALYSIS
+# =====================================
+
+def analyze_flood(mask):
 
     flood_pixels = np.sum(
-        mask == 1
+        mask > 0.5
     )
+
 
     total_pixels = mask.size
 
@@ -218,27 +190,85 @@ def predict_image(uploaded_file):
 
 
     flood_percentage = round(
-        flood_percentage,
+        float(flood_percentage),
         2
     )
 
 
+    if flood_percentage < 10:
 
-    # =====================================
-    # OVERLAY
-    # =====================================
+        risk_level = "Low 🟢"
+
+        recommendation = (
+            "No major flood indication detected.\n\n"
+            "• Continue monitoring weather updates.\n"
+            "• No immediate action is required."
+        )
+
+
+    elif flood_percentage < 40:
+
+        risk_level = "Moderate 🟡"
+
+        recommendation = (
+            "Possible flood affected regions detected.\n\n"
+            "• Monitor weather conditions.\n"
+            "• Stay updated with local warnings."
+        )
+
+
+    else:
+
+        risk_level = "High 🔴"
+
+        recommendation = (
+            "Large flood affected regions detected.\n\n"
+            "• Follow emergency guidelines.\n"
+            "• Avoid affected areas."
+        )
+
+
+    return (
+        flood_percentage,
+        risk_level,
+        recommendation
+    )
+
+
+
+
+
+# =====================================
+# CREATE OVERLAY
+# =====================================
+
+def create_overlay(
+        original,
+        mask
+):
+
+    mask = cv2.resize(
+        mask,
+        (
+            original.shape[1],
+            original.shape[0]
+        )
+    )
+
 
     overlay = original.copy()
 
 
-    overlay[mask == 1] = [
-        255,
+    overlay[
+        mask > 0
+    ] = [
         0,
-        0
+        0,
+        255
     ]
 
 
-    overlay = cv2.addWeighted(
+    result = cv2.addWeighted(
         original,
         0.7,
         overlay,
@@ -247,24 +277,73 @@ def predict_image(uploaded_file):
     )
 
 
+    return result
 
-    # =====================================
-    # DETAILS
-    # =====================================
+
+
+
+
+# =====================================
+# MAIN PREDICTION FUNCTION
+# =====================================
+
+def predict_image(uploaded_file):
+
+
+    image = Image.open(
+        uploaded_file
+    )
+
+
+    processed_image, original = preprocess_image(
+        image
+    )
+
+
+
+    prediction = model.predict(
+        processed_image
+    )
+
+
+
+    mask = prediction[0]
+
+
+
+    if mask.shape[-1] == 1:
+
+        mask = np.squeeze(
+            mask,
+            axis=-1
+        )
+
+
+
+    binary_mask = (
+        mask > 0.5
+    ).astype(
+        np.uint8
+    )
+
+
+
+    flood_percentage, risk_level, recommendation = analyze_flood(
+        mask
+    )
+
+
 
     confidence = round(
-        float(np.max(prediction)) * 100,
+        float(np.max(mask) * 100),
         2
     )
 
 
-    risk = get_risk_level(
-        flood_percentage
-    )
 
-
-    recommendation = get_recommendation(
-        risk
+    overlay = create_overlay(
+        original,
+        binary_mask
     )
 
 
@@ -276,7 +355,7 @@ def predict_image(uploaded_file):
 
 
         "mask":
-            mask * 255,
+            binary_mask * 255,
 
 
         "overlay":
@@ -288,7 +367,7 @@ def predict_image(uploaded_file):
 
 
         "risk_level":
-            risk,
+            risk_level,
 
 
         "confidence":

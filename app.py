@@ -2,34 +2,18 @@
 # IMPORTS
 # =====================================
 
-import streamlit as st
 import io
 import zipfile
 
 from PIL import Image
-
 import streamlit as st
-
-st.set_page_config(
-    page_title="FloodGuard AI",
-    page_icon="🌊",
-    layout="wide"
-)
-
-import io
-import zipfile
-from PIL import Image
-
-st.write("App started...")
 
 try:
     from src.predict import predict_image
-    st.success("predict.py imported successfully")
 except Exception as e:
-    st.error("Import failed")
     st.exception(e)
-    raise
-# =====================================
+    st.stop()
+    # =====================================
 # PAGE CONFIG
 # =====================================
 
@@ -45,60 +29,107 @@ st.set_page_config(
 
 if "result" not in st.session_state:
     st.session_state.result = None
-# =====================================
+    # =====================================
 # COLORS
 # =====================================
 
-
 COLORS = {
 
-    "bg": "#0F172A",
-
-    "card": "#1E293B",
-
+    "bg": "#0B0F19",
+    "sidebar": "#151B26",
+    "card": "#1B2230",
     "text": "#F8FAFC",
+    "secondary": "#94A3B8",
+    "accent": "#4F9DFF"
 
-    "secondary": "#CBD5E1",
-
-    "accent": "#38BDF8"
-
-}
-# =====================================
+}# =====================================
 # CSS
 # =====================================
-
 
 st.markdown(
 f"""
 <style>
 
+/* App */
 
-.stApp {{
+.stApp{{
+    background:{COLORS["bg"]};
+    color:{COLORS["text"]};
+}}
 
-background:{COLORS["bg"]};
-
+.block-container{{
+    max-width:1100px;
+    padding-top:1rem;
 }}
 
 
+/* Sidebar */
 
-.block-container {{
-
-padding-top:1rem;
-
+section[data-testid="stSidebar"]{{
+    background:{COLORS["sidebar"]};
+    border-right:1px solid #2A3345;
 }}
 
 
+/* Text */
 
-h1,h2,h3 {{
-
-color:{COLORS["text"]};
-
+h1,h2,h3,h4,h5,h6,p,label,span,div{{
+    color:{COLORS["text"]};
 }}
 
 
+/* Upload Box */
+
+div[data-testid="stFileUploader"]{{
+    background:{COLORS["card"]};
+    border:1px solid #2D3648;
+    border-radius:15px;
+    padding:18px;
+}}
+
+
+/* Upload Button */
+
+.stFileUploader button{{
+    background:#232C3B;
+    color:white;
+    border-radius:25px;
+    border:none;
+    font-weight:600;
+}}
+
+.stFileUploader button:hover{{
+    background:#2E3B50;
+}}
+
+
+/* Buttons */
+
+.stButton > button,
+.stDownloadButton > button{{
+    background:{COLORS["accent"]};
+    color:white;
+    border:none;
+    border-radius:10px;
+}}
+
+.stButton > button:hover,
+.stDownloadButton > button:hover{{
+    opacity:0.9;
+}}
+
+
+/* Expanders */
+
+.streamlit-expanderHeader{{
+    font-weight:600;
+}}
+
+hr{{
+    border:1px solid #263041;
+}}
 
 </style>
-
 """,
 unsafe_allow_html=True
 )
@@ -108,153 +139,73 @@ unsafe_allow_html=True
 
 with st.sidebar:
 
-    # Logo + Title
+    st.title("🌊 FloodGuard AI")
 
-    st.markdown(
-        f"""
-        <div style="
-        text-align:center;
-        padding:10px;
-        ">
-
-        <h1 style="
-        color:{COLORS["text"]};
-        font-size:28px;
-        margin-bottom:5px;
-        ">
-        🌊 FloodGuard AI
-        </h1>
-
-
-        <p style="
-        color:{COLORS["secondary"]};
-        font-size:13px;
-        ">
-        AI Flood Monitoring System
-        </p>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
+    st.caption("AI-Powered Flood Detection from Satellite Images")
 
     st.divider()
 
-
-
-    # ==============================
-    # ABOUT
-    # ==============================
-
     with st.expander("ⓘ About FloodGuard AI"):
 
-        st.write(
-            """
-            FloodGuard AI is an AI-powered
-            flood detection system that analyzes
-            satellite images to identify
-            possible flood affected regions.
-            """
-        )
+        st.write("""
+FloodGuard AI detects flooded regions from satellite imagery using an AI segmentation model.
 
+The system provides:
 
+• Flood Overlay
 
-    # ==============================
-    # AI SYSTEM
-    # ==============================
+• Flood Mask
+
+• Flood Coverage
+
+• Risk Level
+
+• AI Confidence
+""")
 
     with st.expander("🤖 AI System"):
 
-        st.write(
-            """
-            🧠 Architecture:
-            U-Net Deep Learning Model
+        st.write("""
+Model : U-Net
 
+Framework : TensorFlow / Keras
 
-            ⚡ Optimization:
-            Image Segmentation Model
+Input : 256 × 256 Satellite Image
 
-
-            🛰 Input:
-            Satellite Images
-
-
-            🎯 Task:
-            Flood Region Segmentation
-            """
-        )
-
-
-
-    # ==============================
-    # HOW IT WORKS
-    # ==============================
+Task : Binary Segmentation
+""")
 
     with st.expander("🛰 How It Works"):
 
-        st.write(
-            """
-            1️⃣ Upload Satellite Image
+        st.write("""
+1. Upload a satellite image
 
+2. AI preprocesses the image
 
-            2️⃣ AI model analyzes the image
+3. Flood regions are detected
 
-
-            3️⃣ Flood regions are detected
-
-
-            4️⃣ Flood coverage and risk level
-            are generated
-            """
-        )
-
-
-
-    # ==============================
-    # MODEL INFORMATION
-    # ==============================
+4. Flood analysis is generated
+""")
 
     with st.expander("📊 Model Information"):
 
-        st.write(
-            """
-            🔹 Deep Learning Based
+        st.write("""
+• Deep Learning
 
+• U-Net Architecture
 
-            🔹 U-Net Architecture
+• Satellite Image Analysis
 
-
-            🔹 Binary Image Segmentation
-
-
-            🔹 Satellite Image Analysis
-            """
-        )
-
-
-
-    # ==============================
-    # NEW ANALYSIS
-    # ==============================
+• Binary Segmentation
+""")
 
     with st.expander("🔄 New Analysis"):
-
-        st.write(
-            """
-            Clear the current prediction
-            and upload a new satellite image.
-            """
-        )
-
 
         if st.button(
             "Start New Analysis",
             use_container_width=True
         ):
-
             st.session_state.result = None
-
             st.rerun()
 # =====================================
 # HEADER
@@ -262,308 +213,188 @@ with st.sidebar:
 
 st.markdown(
 """
-<div style="
-text-align:center;
-margin-top:20px;
-">
+# 🌊 FloodGuard AI
 
-
-<div style="
-font-size:70px;
-">
-🌊
-</div>
-
-
-<h1>
-FloodGuard AI
-</h1>
-
-
-<p>
 AI-Powered Flood Detection from Satellite Images
-</p>
-
-
-</div>
-""",
-unsafe_allow_html=True
+"""
 )
 # =====================================
 # IMAGE UPLOAD
 # =====================================
 
-col1, col2, col3 = st.columns([2, 4, 2])
-
-
-with col2:
-
-    uploaded_file = st.file_uploader(
-        "📤 Upload Satellite Image",
-        type=[
-            "png",
-            "jpg",
-            "jpeg",
-            "tif",
-            "tiff"
-        ]
-    )
+uploaded_file = st.file_uploader(
+    "📤 Upload Satellite Image",
+    type=[
+        "png",
+        "jpg",
+        "jpeg",
+        "tif",
+        "tiff"
+    ]
+)
 # =====================================
 # PREDICTION
 # =====================================
 
 if uploaded_file is not None:
 
-    with st.spinner(
-        "🌊 Analyzing satellite image..."
-    ):
+    with st.spinner("🌊 Analyzing Satellite Image..."):
 
-        st.session_state.result = predict_image(
-            uploaded_file
-        )
+        st.session_state.result = predict_image(uploaded_file)
 # =====================================
-# IMAGE RESULTS
+# DETECTION RESULTS
 # =====================================
-
 
 if st.session_state.result is not None:
 
     result = st.session_state.result
 
-
-    st.markdown(
-        """
-        <br>
-        <h2 style="text-align:center;">
-        🛰 Detection Results
-        </h2>
-        """,
-        unsafe_allow_html=True
-    )
-
+    st.markdown("## 🛰 Detection Results")
 
     col1, col2, col3 = st.columns(3)
 
-
     with col1:
-
-        st.write("📷 Original Image")
-
-        st.image(
-            result["original"],
-            width=300
-        )
-
+        st.image(result["original"], caption="Original")
 
     with col2:
-
-        st.write("🛰 Flood Overlay")
-
-        st.image(
-            result["overlay"],
-            width=300
-        )
-
+        st.image(result["overlay"], caption="Flood Overlay")
 
     with col3:
-
-        st.write("🌊 Flood Mask")
-
-        st.image(
-            result["mask"],
-            width=300
-        )
+        st.image(result["mask"], caption="Flood Mask")
 # =====================================
-# FLOOD ANALYSIS RESULTS
+# FLOOD ANALYSIS
 # =====================================
-
 
 if st.session_state.result is not None:
 
     result = st.session_state.result
 
+    st.markdown("## 🌊 Flood Analysis")
 
-    st.markdown(
-        """
-        <br>
-        <h2 style="text-align:center;">
-        🌊 Flood Analysis
-        </h2>
-        """,
-        unsafe_allow_html=True
-    )
-
-
+    # Create the 3 columns
     col1, col2, col3 = st.columns(3)
-
-
 
     with col1:
 
-        st.markdown(
-            f"""
-            <div style="text-align:center;">
+        st.markdown("""
+        <p style="font-size:18px;font-weight:600;">
+        🌊 Flood Coverage
+        </p>
+        """, unsafe_allow_html=True)
 
-            <p style="
-            font-size:16px;
-            margin-bottom:5px;
-            ">
-            🌊 Flood Coverage
-            </p>
+        st.markdown(f"""
+        <p style="font-size:30px;font-weight:bold;color:#4F9DFF;">
+        {result["flood_percentage"]}
+        </p>
+        """, unsafe_allow_html=True)
 
-
-            <p style="
-            font-size:24px;
-            margin:0;
-            ">
-            {result["flood_percentage"]}
-            </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-
-
+    
     with col2:
 
-        st.markdown(
-            f"""
-            <div style="text-align:center;">
+        st.markdown("""
+        <p style="font-size:18px;font-weight:600;">
+        ⚠️ Risk Level
+        </p>
+        """, unsafe_allow_html=True)
 
-            <p style="
-            font-size:16px;
-            margin-bottom:5px;
-            ">
-            ⚠ Risk Level
-            </p>
+        risk = result["risk_level"]
 
+        if risk.lower() == "low":
+           st.success(risk)
 
-            <p style="
-            font-size:24px;
-            margin:0;
-            ">
-            {result["risk_level"]}
-            </p>
+        elif risk.lower() == "moderate":
+            st.warning(risk)
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-
-
+        else:
+            st.error(risk)
     with col3:
 
-        st.markdown(
-            f"""
-            <div style="text-align:center;">
+        st.markdown("""
+        <p style="font-size:18px;font-weight:600;">
+        🧠 AI Confidence
+        </p>
+        """, unsafe_allow_html=True)
 
-            <p style="
-            font-size:16px;
-            margin-bottom:5px;
-            ">
-            🧠 AI Confidence
-            </p>
-
-
-            <p style="
-            font-size:24px;
-            margin:0;
-            ">
-            {result["confidence"]}
-            </p>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""
+        <p style="font-size:25px;font-weight:bold;color:#38BDF8;">
+        {result["confidence"]}
+        </p>
+        """, unsafe_allow_html=True)
 # =====================================
 # RECOMMENDATIONS
 # =====================================
 
-
 if st.session_state.result is not None:
 
     result = st.session_state.result
 
+    st.markdown("---")
+    st.markdown("## 💡 Recommendations")
 
-    st.markdown(
-        """
-        <br>
-
-        <h2 style="text-align:center;">
-        💡 Recommendations
-        </h2>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-    recommendation = result["recommendation"]
-
-
-    st.markdown(
-        f"""
-        <div style="
-        text-align:center;
-        font-size:16px;
-        line-height:1.8;
-        ">
-
-        {recommendation.replace(chr(10), "<br>")}
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.write(result["recommendation"])
 # =====================================
-# DOWNLOAD BUTTON
+# DOWNLOAD REPORT
 # =====================================
 
 if st.session_state.result is not None:
 
     result = st.session_state.result
 
+    report = f"""
+FloodGuard AI Report
+===============================
+
+Flood Coverage : {result["flood_percentage"]}
+
+Risk Level     : {result["risk_level"]}
+
+AI Confidence  : {result["confidence"]}
+
+----------------------------------------
+
+Recommendations
+
+{result["recommendation"]}
+
+----------------------------------------
+
+Generated by FloodGuard AI
+"""
 
     st.download_button(
 
         label="📥 Download ",
 
-        data="FloodGuard AI Analysis Completed",
+        data=report,
 
-        file_name="FloodGuard_Result.txt",
+        file_name="FloodGuard_Report.txt",
 
-        mime="text/plain"
+        mime="text/plain",
+
+        use_container_width=True
 
     )
 # =====================================
 # FOOTER
 # =====================================
 
+st.markdown("---")
+
 st.markdown(
 """
+<div style="text-align:center; padding:10px 0;">
+
+<b>🌊 FloodGuard AI</b><br>
+
+AI-Powered Flood Detection from Satellite Images
+
 <br>
-<hr>
 
-
-<div style="
-text-align:center;
-font-size:13px;
-color:#CBD5E1;
-">
-
-
-🌊 <b>FloodGuard AI</b><br>
-
-AI-Powered Flood Detection from Satellite Images<br>
-
-Built using Deep Learning and Streamlit
-
+<small>
+Built using TensorFlow, U-Net & Streamlit
+</small>
 
 </div>
-
 """,
 unsafe_allow_html=True
 )

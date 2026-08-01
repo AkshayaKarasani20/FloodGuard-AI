@@ -1,15 +1,11 @@
 [theme]
-
 primaryColor="#00D4AA"
 backgroundColor="#0E1117"
 secondaryBackgroundColor="#161B22"
 textColor="#FAFAFA"
 font="sans serif"
 
-
 [server]
-
-runOnSave=true
-headless=false
-enableCORS=false
-enableXsrfProtection=false
+headless = true
+enableCORS = false
+enableXsrfProtection = false

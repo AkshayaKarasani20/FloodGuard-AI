@@ -8,7 +8,27 @@ import zipfile
 
 from PIL import Image
 
-from src.predict import predict_image
+import streamlit as st
+
+st.set_page_config(
+    page_title="FloodGuard AI",
+    page_icon="🌊",
+    layout="wide"
+)
+
+import io
+import zipfile
+from PIL import Image
+
+st.write("App started...")
+
+try:
+    from src.predict import predict_image
+    st.success("predict.py imported successfully")
+except Exception as e:
+    st.error("Import failed")
+    st.exception(e)
+    raise
 # =====================================
 # PAGE CONFIG
 # =====================================

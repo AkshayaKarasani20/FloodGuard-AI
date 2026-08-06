@@ -18,7 +18,7 @@ except Exception as e:
 # =====================================
 
 st.set_page_config(
-    page_title="FloodGuard AI",
+    page_title="HydroVision",
     page_icon="🌊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -139,9 +139,9 @@ unsafe_allow_html=True
 
 with st.sidebar:
 
-    st.title("🌊 FloodGuard AI")
+    st.title("🌊 HydroVision")
 
-    st.caption("AI-Powered Flood Detection from Satellite Images")
+    st.caption("Satellite-Based Flood Detection & Risk Assessment")
 
     st.divider()
 
@@ -213,9 +213,9 @@ Task : Binary Segmentation
 
 st.markdown(
 """
-# 🌊 FloodGuard AI
+# 🌊 HydroVision
 
-AI-Powered Flood Detection from Satellite Images
+Satellite-Based Flood Detection & Risk Assessment
 """
 )
 # =====================================
@@ -384,11 +384,8 @@ st.markdown(
 """
 <div style="text-align:center; padding:10px 0;">
 
-<b>🌊 FloodGuard AI</b><br>
+<b>🌊 HydroVision</b>
 
-AI-Powered Flood Detection from Satellite Images
-
-<br>
 
 <small>
 Built using TensorFlow, U-Net & Streamlit

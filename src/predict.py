@@ -230,13 +230,6 @@ def predict_image(uploaded_file):
         mask
     )
 
-
-    confidence = round(
-        float(np.mean(mask)) * 100,
-        2
-    )
-
-
     overlay = create_overlay(
         original,
         binary_mask
@@ -263,9 +256,7 @@ def predict_image(uploaded_file):
         "risk_level":
             risk_level,
 
-        "confidence":
-            f"{confidence}%",
-
+        
         "recommendation":
             recommendation
     }

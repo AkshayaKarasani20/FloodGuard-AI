@@ -1,4 +1,4 @@
-﻿# 🌊 FloodGuard AI
+﻿# 🌊 HydroVision
 
 An AI-powered flood detection system that identifies flooded regions from satellite images using a U-Net deep learning model.
 
@@ -6,7 +6,7 @@ An AI-powered flood detection system that identifies flooded regions from satell
 
 ## 📌 Project Overview
 
-FloodGuard AI is a deep learning application developed to detect flooded areas from satellite imagery. The system predicts flood masks and calculates the percentage of flooded area, helping in disaster monitoring and response.
+HydroVision is a deep learning application developed to detect flooded areas from satellite imagery. The system predicts flood masks and calculates the percentage of flooded area, helping in disaster monitoring and response.
 
 ---
 
@@ -67,7 +67,7 @@ The application displays:
 Clone the repository:
 
 ```bash
-git clone https://github.com/AkshayaKarasani20/FloodGuard-AI.git
+git clone https://github.com/AkshayaKarasani20/HydroVision.git
 ```
 
 Install requirements:
